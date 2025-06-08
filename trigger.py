@@ -1,45 +1,40 @@
-import os
-import time
+from flask import Flask
 import threading
 import requests
-from flask import Flask
+import time
+import os
 
-# Seu token e repositórios
-GH_TOKEN = os.getenv("GH_TOKEN")
-HEADERS = {"Authorization": f"Bearer {GH_TOKEN}"}
-REPOS = [
-    ("luis-tiberio", "piso_exp", "att10.yml"),
-    ("luis-tiberio", "piso_exp", "shopee_automation.yml"),
-    ("luis-tiberio", "queue_list", "att10.yml"),
-    ("luis-tiberio", "queue_list", "queue_list_sp5.yml"),
+app = Flask(__name__)
+
+TOKEN = os.getenv("GH_TOKEN")
+HEADERS = {
+    "Authorization": f"Bearer {TOKEN}",
+    "Accept": "application/vnd.github+json"
+}
+
+WORKFLOWS = [
+    {"repo": "piso_exp", "workflow": "att10.yml"},
+    {"repo": "piso_exp", "workflow": "shopee_automation.yml"},
+    {"repo": "queue_list", "workflow": "att10.yml"},
+    {"repo": "queue_list", "workflow": "queue_list_sp5.yml"},
 ]
 
-def trigger_workflows():
-    for owner, repo, workflow in REPOS:
-        url = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/{workflow}/dispatches"
-        print(f"Disparando: {url}")
-        res = requests.post(url, headers=HEADERS, json={"ref": "main"})
-        print(f"Status: {res.status_code} | {res.text}")
-    print("Disparo concluído.")
-
-# Roda periodicamente
-def scheduler():
+def trigger_loop():
     while True:
-        print("⌛ Aguardando 10 minutos...")
+        for wf in WORKFLOWS:
+            url = f"https://api.github.com/repos/luis-tiberio/{wf['repo']}/actions/workflows/{wf['workflow']}/dispatches"
+            data = {"ref": "main"}
+            try:
+                res = requests.post(url, headers=HEADERS, json=data)
+                print(f"[OK] {wf['workflow']} -> {res.status_code}")
+            except Exception as e:
+                print(f"[ERRO] {wf['workflow']} -> {e}")
         time.sleep(600)
-        trigger_workflows()
-
-# Iniciar thread paralela
-threading.Thread(target=scheduler, daemon=True).start()
-
-# Criar servidor Flask (obrigatório pro Render aceitar)
-app = Flask(__name__)
 
 @app.route('/')
 def home():
     return "GitHub Actions Pinger rodando!"
 
-# Rodar servidor (escuta na porta exigida pelo Render)
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    threading.Thread(target=trigger_loop).start()
+    app.run(host="0.0.0.0", port=3000)
