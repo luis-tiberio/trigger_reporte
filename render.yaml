@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: github-actions-pinger
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python trigger.py
+    envVars:
+      - key: GH_TOKEN
+        sync: false
