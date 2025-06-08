@@ -1,27 +1,32 @@
-from flask import Flask
+from flask import Flask, request
 import requests
+import os
 
 app = Flask(__name__)
 
-GITHUB_TOKEN = "ghp_SEU_TOKEN_AQUI"
-REPO = "seu-usuario/seu-repo"
-WORKFLOW = "queue_list_sp5.yml"
-BRANCH = "main"  # ou "master"
+GITHUB_TOKEN = os.environ.get("GH_TOKEN")  # Salvo em variáveis de ambiente do Render
+USERNAME = "luis-tiberio"
 
-def trigger_workflow():
-    url = f"https://api.github.com/repos/{REPO}/actions/workflows/{WORKFLOW}/dispatches"
+@app.route("/run", methods=["GET"])
+def run_workflow():
+    repo = request.args.get("repo")
+    workflow = request.args.get("workflow")
+
+    if not repo or not workflow:
+        return "Parâmetros ausentes", 400
+
+    url = f"https://api.github.com/repos/{USERNAME}/{repo}/actions/workflows/{workflow}/dispatches"
     headers = {
         "Authorization": f"Bearer {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github+json"
+        "Accept": "application/vnd.github.v3+json"
     }
-    data = {"ref": BRANCH}
-    r = requests.post(url, headers=headers, json=data)
-    return r.status_code, r.text
+    data = {
+        "ref": "main"  # Ou a branch que seus workflows estão
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    return f"{workflow} acionado: {response.status_code} - {response.text}", response.status_code
 
 @app.route("/")
-def home():
-    status, response = trigger_workflow()
-    return f"✅ Disparado: {status} - {response}", 200
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+def root():
+    return "Servidor GitHub Actions Pinger está ativo!"
