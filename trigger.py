@@ -26,7 +26,7 @@ def trigger_loop():
                 print(f"[OK] {wf['workflow']} -> {res.status_code}")
             except Exception as e:
                 print(f"[ERRO] {wf['workflow']} -> {e}")
-        time.sleep(1800)
+        time.sleep(600)
 
 @app.route('/')
 def home():
