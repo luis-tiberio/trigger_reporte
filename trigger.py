@@ -11,23 +11,38 @@ HEADERS = {
 }
 
 REPO = "att_reporte"           # seu repo com a workflow Reporte HxH
-WORKFLOW_FILE = "reporte.yml" # seu arquivo workflow, ex: 'Reporte_HxH.yml' ou 'att10.yml'
+WORKFLOW_FILE = "reporte.yml" # nome exato do arquivo .yml
 
 @app.route('/trigger', methods=['POST'])
 def trigger_workflow():
-    ref = request.json.get("ref", "main")  # opcional: branch default main
+    ref = request.json.get("ref", "main")  # padrão: main
     url = f"https://api.github.com/repos/luis-tiberio/{REPO}/actions/workflows/{WORKFLOW_FILE}/dispatches"
     payload = {"ref": ref}
 
+    print(f"[INFO] Disparando workflow '{WORKFLOW_FILE}' no repositório '{REPO}' (ref: {ref})")
+    print(f"[DEBUG] Endpoint: {url}")
+    print(f"[DEBUG] Payload: {payload}")
+
     res = requests.post(url, headers=HEADERS, json=payload)
+
+    print(f"[DEBUG] Status Code: {res.status_code}")
+    print(f"[DEBUG] Response Text: {res.text}")
+
     if res.status_code == 204:
+        print("[SUCCESS] Workflow disparado com sucesso!")
         return {"message": "Workflow disparado com sucesso!"}, 200
     else:
-        return {"error": f"Falha ao disparar workflow. Status: {res.status_code}, Resposta: {res.text}"}, 500
+        print("[ERROR] Falha ao disparar workflow.")
+        return {
+            "error": "Falha ao disparar workflow.",
+            "status_code": res.status_code,
+            "response": res.text
+        }, 500
 
 @app.route('/')
 def home():
     return "API para disparar workflow rodando."
 
 if __name__ == '__main__':
+    print("[INFO] Servidor Flask iniciado na porta 3000")
     app.run(host="0.0.0.0", port=3000)
