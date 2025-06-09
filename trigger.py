@@ -1,7 +1,5 @@
-from flask import Flask
-import threading
+from flask import Flask, request
 import requests
-import time
 import os
 
 app = Flask(__name__)
@@ -12,27 +10,24 @@ HEADERS = {
     "Accept": "application/vnd.github+json"
 }
 
-WORKFLOWS = [
-    {"repo": "piso_exp", "workflow": "att10.yml"},
-    {"repo": "queue_list", "workflow": "att10.yml"},
-]
+REPO = "att_reporte"           # seu repo com a workflow Reporte HxH
+WORKFLOW_FILE = "reporte.yml" # seu arquivo workflow, ex: 'Reporte_HxH.yml' ou 'att10.yml'
 
-def trigger_loop():
-    while True:
-        for wf in WORKFLOWS:
-            url = f"https://api.github.com/repos/luis-tiberio/{wf['repo']}/actions/workflows/{wf['workflow']}/dispatches"
-            data = {"ref": "main"}
-            try:
-                res = requests.post(url, headers=HEADERS, json=data)
-                print(f"[OK] {wf['workflow']} -> {res.status_code}")
-            except Exception as e:
-                print(f"[ERRO] {wf['workflow']} -> {e}")
-        time.sleep(600)
+@app.route('/trigger', methods=['POST'])
+def trigger_workflow():
+    ref = request.json.get("ref", "main")  # opcional: branch default main
+    url = f"https://api.github.com/repos/luis-tiberio/{REPO}/actions/workflows/{WORKFLOW_FILE}/dispatches"
+    payload = {"ref": ref}
+
+    res = requests.post(url, headers=HEADERS, json=payload)
+    if res.status_code == 204:
+        return {"message": "Workflow disparado com sucesso!"}, 200
+    else:
+        return {"error": f"Falha ao disparar workflow. Status: {res.status_code}, Resposta: {res.text}"}, 500
 
 @app.route('/')
 def home():
-    return "GitHub Actions Pinger rodando!"
+    return "API para disparar workflow rodando."
 
 if __name__ == '__main__':
-    threading.Thread(target=trigger_loop).start()
     app.run(host="0.0.0.0", port=3000)
