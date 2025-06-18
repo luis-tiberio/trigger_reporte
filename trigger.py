@@ -16,6 +16,7 @@ WORKFLOWS = [
     {"repo": "att_reporte", "workflow": "reporte.yml"},
     {"repo": "backlog", "workflow": "backlog.yml"},
     {"repo": "reportes_sp5", "workflow": "prod-sp5.yml"},
+    {"repo": "piso_exp", "worklow": "piso-playwright.yml"},
 ]
 
 def trigger_loop():
