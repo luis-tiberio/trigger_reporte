@@ -15,7 +15,7 @@ HEADERS = {
 WORKFLOWS = [
     {"repo": "att_reporte", "workflow": "reporte.yml"},
     {"repo": "backlog", "workflow": "backlog.yml"},
-    {"repo": "reportes_sp5", "workflow": "prod-sp5.yml"},
+    {"repo": "reportes_sp5", "workflow": "dados.yml"},
 ]
 
 def trigger_loop():
